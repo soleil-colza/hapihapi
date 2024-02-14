@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
                                 ),
                                 title = {
                                     Text(
-                                        text = "Proximity Sensor",
+                                        text = "Hapi Hapi Sensor",
                                         modifier = Modifier.fillMaxWidth(),
                                         textAlign = TextAlign.Center,
                                         color = Color.White
