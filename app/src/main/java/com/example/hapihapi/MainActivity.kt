@@ -22,13 +22,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import com.example.hapihapi.ui.theme.*
 import java.util.*
 import androidx.compose.material3.Text
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.ui.PlayerView
+
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
 
@@ -59,7 +63,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     ) {
-                        ProximitySensor()
+                        ProximitySensorScreen()
                     }
                 }
             }
@@ -68,17 +72,28 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun ProximitySensor() {
+fun ProximitySensorScreen() {
 
-    val ctx = LocalContext.current
+    val context = LocalContext.current
+    val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    val proximitySensor = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
 
-    val sensorManager: SensorManager = ctx.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+    var sensorStatus by remember { mutableStateOf("") }
 
-    val proximitySensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
+    val videoPlayer = remember  {
+        SimpleExoPlayer.Builder(context).build().apply {
 
-    val sensorStatus = remember {
-        mutableStateOf("")
+            setMediaItem(
+                MediaItem.Builder()
+                    .setUri("android.resource://com.example.hapihapi/${R.raw.hapihapi}")
+                    .build()
+            )
+
+            prepare()
+        }
     }
+
+    val chipichapaUri = "android.resource://com.example.hapihapi/${R.raw.chipichapa}"
 
     val proximitySensorEventListener = object : SensorEventListener {
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
@@ -86,68 +101,64 @@ fun ProximitySensor() {
 
         override fun onSensorChanged(event: SensorEvent) {
             if (event.sensor.type == Sensor.TYPE_PROXIMITY) {
-
                 if (event.values[0] == 0f) {
+                    sensorStatus = "Near"
 
-                    sensorStatus.value = "Near"
+                    videoPlayer.setMediaItem(
+                        MediaItem.Builder()
+                            .setUri(chipichapaUri)
+                            .build()
+                    )
+
+                    videoPlayer.prepare()
+                    videoPlayer.play()
                 } else {
-                    sensorStatus.value = "Away"
+                    sensorStatus = "Away"
+
+                    videoPlayer.setMediaItem(
+                        MediaItem.Builder()
+                            .setUri("android.resource://com.example.hapihapi/${R.raw.hapihapi}")
+                            .build()
+                    )
+
+                    videoPlayer.prepare()
+                    videoPlayer.play()
                 }
             }
         }
     }
 
     sensorManager.registerListener(
-
         proximitySensorEventListener,
-
         proximitySensor,
-
         SensorManager.SENSOR_DELAY_NORMAL
     )
 
     Column(
-
-        modifier = Modifier
-            .fillMaxSize()
-            .fillMaxHeight()
-            .fillMaxWidth()
-
-            .padding(5.dp),
-
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         Text(
             text = "Object is",
-            color = Color.Black,
-
             fontWeight = FontWeight.Bold,
-
-            fontFamily = FontFamily.Default,
-
-            fontSize = 40.sp, modifier = Modifier.padding(5.dp)
+            fontSize = 40.sp
         )
 
         Text(
-            text = sensorStatus.value,
-            color = Color.Black,
-
+            text = sensorStatus,
             fontWeight = FontWeight.Bold,
-
-            fontFamily = FontFamily.Default,
-
-            fontSize = 40.sp, modifier = Modifier.padding(5.dp)
+            fontSize = 40.sp
         )
-        Text(
-            text = "Sensor",
-            color = Color.Black,
 
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Default,
-
-            fontSize = 40.sp, modifier = Modifier.padding(5.dp)
+        AndroidView(
+            factory = {
+                PlayerView(it).apply {
+                    player = videoPlayer
+                }
+            },
+            modifier = Modifier.size(300.dp)
         )
     }
 }
