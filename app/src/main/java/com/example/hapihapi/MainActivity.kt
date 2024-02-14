@@ -117,7 +117,7 @@ fun ProximitySensorScreen() {
 
                     videoPlayer.setMediaItem(
                         MediaItem.Builder()
-                            .setUri("android.resource://${context.packageName}/${R.raw.hapihapi}")
+                            .setUri("android.resource://com.example.hapihapi/${R.raw.hapihapi}")
                             .build()
                     )
 
